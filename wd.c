@@ -326,7 +326,7 @@ STATIC PTASK_DECL(wdServer, unused)
 #ifdef USE_SIGHANDLER
 	} else {
 		/* signal handler jumps in here */
-		fprintf(stderr,"(longjump) terminating...\n");
+		fprintf(stderr,"(longjump) ");
 	}
 #endif
 
@@ -335,6 +335,7 @@ STATIC PTASK_DECL(wdServer, unused)
 leave:
 	/* vxWorks: we MUST cleanup in the server context */
 	wdCleanup();
+	fprintf(stderr,"...terminated watchdog server.\n");
 #ifdef SYNERGYTARGET
 	wdTaskId=NOTASK_ID;
 #endif
