@@ -3,6 +3,8 @@ CFLAGS = -O -I$(WRAPPER_PATH)
 CROSS = ccppc
 CROSS_CFLAGS = -I$(WRAPPER_PATH) -DSYNERGYTARGET
 TGTDIR = /remote/synergy/test
+RPCLIBS = -lrpcsvc
+# -lnsl
 
 all: wd wd.target.o wdclnt
 
@@ -11,7 +13,7 @@ install: all
 
 # wd on the host
 wd: wd.host.o
-	$(CC) -o $@ $<
+	$(CC) -o $@ $< $(RPCLIBS)
 
 wd.host.o: wd.c wd.h
 	$(CC) $(CFLAGS) -o $@ -c $<
@@ -22,7 +24,7 @@ wd.target.o: wd.c wd.h
 
 # wd client
 wdclnt: wdclnt.c wd.h
-	$(CC) $(CFLAGS) -o $@ $< -lrpcsvc -lnsl
+	$(CC) $(CFLAGS) -o $@ $< $(RPCLIBS)
 
 clean::
 	$(RM) -f wdclnt wd wd.host.o wd.target.o wd.o

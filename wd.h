@@ -1,8 +1,8 @@
 #ifndef WATCHDOG_SERVICE_H
 #define WATCHDOG_SERVICE_H
 
-#define WDPROG	((unsigned long)0xb0aab0aa)
-#define WDVERS	((unsigned long)1)
+#define WDPROG	((unsigned int)0xb0aab0aa)
+#define WDVERS	((unsigned int)1)
 
 #define WD_CONNECT	1
 #define WD_DISCONNECT	2
