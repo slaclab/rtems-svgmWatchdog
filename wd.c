@@ -352,7 +352,7 @@ wdStart(void)
 {
 	if (NOTASK_ID!=wdTaskId) {
 		fprintf(stderr,"wd already running\n");
-		return;
+		return -1;
 	}
 
 	rpcInit();

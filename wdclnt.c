@@ -1,3 +1,4 @@
+/* $Id$ */
 #include <rpc/rpc.h>
 #include <stdio.h>
 #include <netdb.h>
@@ -11,8 +12,14 @@
 static void
 usage(char *n)
 {
-	fprintf(stderr,"usage: %s [-r] hostname\n",n);
+	fprintf(stderr,"usage: %s [-rvh] hostname\n",n);
 	fprintf(stderr,"          -r: reset now and quit\n");
+	fprintf(stderr,"          -v: print version number and quit\n");
+	fprintf(stderr,"          -h: print this message and quit\n");
+	fprintf(stderr,"       While this program is running, the target\n");
+	fprintf(stderr,"       system is 'watched/petted'.\n");
+	fprintf(stderr,"       Killing (TERM signal) disconnects from the target.\n");
+    fprintf(stderr,"       Suspending this program eventually results in a target reset.\n");
 }
 
 static int terminate=0, reset=0;
@@ -32,7 +39,7 @@ enum clnt_stat	cst;
 int				ch;
 char			*hostnm;
 
-	while ((ch=getopt(argc,argv,"rh")) >= 0) {
+	while ((ch=getopt(argc,argv,"rhv")) >= 0) {
 		switch (ch) {
 			default:
 				fprintf(stderr,"Unknown option '%c'\n",ch);
@@ -40,6 +47,10 @@ char			*hostnm;
 
 			case 'h':
 				usage(argv[0]);
+				exit(0);
+
+			case 'v':
+				fprintf(stderr,"%s\n","$Revision$");
 				exit(0);
 
 			case 'r':
