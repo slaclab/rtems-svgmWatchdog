@@ -8,12 +8,22 @@ RPCLIBS = -lrpcsvc  -lnsl
 
 ifdef RTEMS_MAKEFILE_PATH
 make_rtems = $(MAKE) -f Makefile.rtems $@
+doch = echo haveit
 else
 make_rtems = echo 'Warning: RTEMS_MAKEFILE_PATH not set; not making RTEMS target'
+doch = echo dont haveit
 endif
 
+# only make the RTEMS target if this makefile
+# is called from the top directory (making all rtems apps)
+
+ifdef RTEMS_CUSTOM
+all:
+	$(make_rtems)
+else
 all: wdclnt wd wd-vxworks.o
 	$(make_rtems)
+endif
 
 install: all
 ifdef TGTDIR
@@ -44,3 +54,7 @@ wdclnt: wdclnt.c wd.h
 clean::
 	$(RM) -f wdclnt wd *.o
 	$(make_rtems)
+
+blah:
+	echo $(RTEMS_MAKEFILE_PATH)
+	$(doch)
