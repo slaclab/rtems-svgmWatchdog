@@ -356,7 +356,7 @@ wdCleanup(void)
 }
 
 #if defined(VXWORKS) || defined(__rtems)
-void
+int
 wdStart(void)
 {
 	if (NOTASK_ID!=wdTaskId) {
@@ -372,20 +372,22 @@ wdStart(void)
 	if (pTaskSpawn("wdog", WD_PRIO, 5000, 0, wdServer, 0, &wdTaskId)) {
 		wdTaskId=NOTASK_ID;
 		fprintf(stderr,"Unable to spawn WD server task\n");
+		return -1;
 	} else {
 		printf("Watchdog started; (wdTaskId) ID 0x%08x\n",wdTaskId);
 #ifndef SYNERGYTARGET
 		printf("THIS IS A TESTVERSION - DOESN't TALK TO ANY HARDWARE\n");
 #endif
 	}
-
+	return 0;
 }
 
-void
+int
 wdStop(void)
 {
 	/* clear the 'running' flag; it is polled by the server */
 	wdRunning=0;
+	return 0;
 }
 
 #else
