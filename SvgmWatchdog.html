@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Watchdog driver for Synergy SVGM PPC boards</title>
+  <meta name="generator" content="amaya 6.4, see http://www.w3.org/Amaya/" />
+</head>
+
+<body>
+<h1>A Watchdog Driver for Synergy  VGM Boards</h1>
+<address>
+  Till Straumann, &lt;strauman@slac.stanford.edu&gt;; last updated 2003/1/13
+</address>
+
+<h2>Introduction</h2>
+
+<p>The VGM series boards by Synergy microsystems implement a watchdog timer
+in hardware. The watchdog, when enabled, resets the board upon expiration.
+Note that early versions of VGM boards may lack this feature. The hardware
+watchdog is implemented using one of the four timers (#3) present in the
+OpenPIC interrupt controller.</p>
+
+<p>The driver described on this page initializes the watchdog timer
+(compile-time configurable timeout) and starts a 'watchdog task' to
+periodically 'pet' (reset) the watchdog timer. The scheduling priority for
+the task is set at driver initialization and should be carefully chosen.</p>
+
+<p>The driver also implements an RPC service for remotely watching and/or
+resetting the VGM board.</p>
+
+<p>The watchdog driver runs on vxWorks or RTEMS (a test version also runs on
+various flavours of Unix), the remote client on Linux, Solaris or other
+Unices.</p>
+
+<h2>Starting the Driver</h2>
+
+<p>The watchdog driver (along with makefiles and the host-side 'client'
+program) is available in CVS ($CVSROOT/drivers/svgmWatchdog). After building
+and linking the driver (either statically or as a loadable module) into the
+system, the driver must be initialized/started. The generic SSRL 'system'
+startup script already loads the driver but does not start it, however (to
+avoid interference of the watchdog task with the user application).</p>
+
+<p>The watchdog is started by calling</p>
+
+<blockquote>
+  <p><code>wdStart(watchdog_task_priority)</code></p>
+</blockquote>
+
+<p>e.g. from a startup script. The watchdog may be halted (and the watchdog
+task terminated) using the</p>
+
+<blockquote>
+  <p><code>wdStop()</code></p>
+</blockquote>
+
+<p>command. (CEXP NOTE: the driver is automatically stopped when unloading by
+a module finalizer. It is <em>not </em>automatically started by the module
+initializer, however.)</p>
+
+<h2>Chosing a Proper Watchdog Priority</h2>
+
+<p>Chosing the watchdog task priority is a tradeoff. It is desirable to set
+the priority as low as possible since this will catch runaway tasks. OTOH,
+too low a priority may result in spurious resets if higher prioritized tasks
+need the CPU for longer than the watchdog expiration (1.2seconds by default)
+- cexp module loading or IOC initialization are examples for quite lengthy
+operations. In any case, the watchdog priority should be lower than any
+real-time critical task's. Note that the watchdog task also runs an RPC
+service (described below).</p>
+
+<p>The problem of chosing too high a priority occurs when e.g. a networking
+task runs away or a deadlock occurs while the watchdog task still is
+operational. In these cases, control over the remote CPU may be lost unless
+'remote watching' as described in the following section is used.</p>
+
+<h2>Using "Remote Watching"</h2>
+
+<p>Using the watchdog driver's RPC service functionality in combination with
+a host-side client program '<code>wdclnt</code>', permanent control over a
+target VGM computer can be asserted. After a <em>connection</em> has been
+established between <code>wdclnt</code> and the target watchdog RPC server,
+the server (i.e. the watchdog driver) requires the client to send periodic
+'software pet RPCs' (compile-time default: 5 seconds) and enforces a hardware
+reset if these do not occur. Hence, any event leading to a loss of the RPC
+connection (target crash or deadlock but also a broken network cable or a
+host crash) eventually results in a target reset. Note that it is possible to
+disconnect from the RPC server, thus leaving the "remote watching" mode. The
+<code>wdclnt</code> program transparently connects when starting up and
+disconnects upon exit. </p>
+
+<p>While "remote watching" is very useful for development, it is probably not
+desirable to use this mode during extended periods of time on production
+targets.</p>
+
+<h2>Using "Remote Reset"</h2>
+
+<p>A VGM target can be remotely reset (using the <code>wdclnt</code> program)
+either by suspending a connected <code>wdclnt</code> (for more than 5
+seconds) or by letting it send a special "reset" RPC (using a command line
+option) who is also recognized by the server.</p>
+
+<h2>Using the <code>wdclnt</code> Program</h2>
+
+<h3>NAME</h3>
+
+<p><code><strong>wdclnt</strong></code> - SVGM watchdog client program</p>
+
+<h3>SYNOPSIS</h3>
+
+<p><code><strong>wdclnt</strong></code> [options] <em>target</em></p>
+
+<h3>DESCRIPTION</h3>
+
+<p><strong><code>wdclnt</code></strong> establishes a connection to the
+watchdog RPC server running on the <em>target</em>. It issues periodic 'PET'
+RPCs while connected. <strong><code>wdclnt</code></strong> may be terminated
+by sending it a SIGINT signal which will terminate the connection. Sending
+SIGUSR1 causes <strong><code>wdclnt</code></strong> to issue a RESET request
+to the target.</p>
+
+<h3>OPTIONS</h3>
+<dl>
+  <dt><strong>-h</strong></dt>
+    <dd>print use information and exit</dd>
+  <dt><strong>-v</strong></dt>
+    <dd>print version information and exit</dd>
+  <dt><strong>-r</strong></dt>
+    <dd>send target RESET request and exit</dd>
+</dl>
+</body>
+</html>

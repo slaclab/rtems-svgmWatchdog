@@ -1,16 +1,22 @@
-/* watchdog service
+/* $Id$ */
+
+/* watchdog RPC service
  * by Till Straumann <strauman@slac.stanford.edu>, Oct. 2000
  *    9/09/2002: RTEMS port, 
  */
 
-#if defined(VXWORKS) || defined(__rtems)
+#if defined(VXWORKS) || defined(__rtems__)
 #include "wrap.h"
 #else
 #define  PTASK_DECL(entry,arg)	int entry(void *arg)
 #define  PTASK_LEAVE do {} while (0)
 #endif
 
-#if defined(VXWORKS) && defined(__rtems)
+#ifdef HAVE_CEXP
+#include <cexpHelp.h>
+#endif
+
+#if defined(VXWORKS) && defined(__rtems__)
 #undef VXWORKS
 #endif
 
@@ -31,7 +37,7 @@
 #endif
 #endif
 
-#ifdef __rtems
+#ifdef __rtems__
 #include <rtems.h>
 #endif
 
@@ -60,7 +66,7 @@ extern unsigned long		mpicMemBaseAdrs;
 
 #define NOTASK_ID			ERROR
 
-#elif defined(__rtems)
+#elif defined(__rtems__)
 
 #include <bsp/openpic.h>
 #include <libcpu/io.h>
@@ -76,9 +82,6 @@ extern unsigned long		mpicMemBaseAdrs;
 
 #endif
 
-
-/* priority of the watchdog task */
-#define WD_PRIO		3
 
 #ifdef SYNERGYTARGET
 /* hardware watchdog pet interval
@@ -109,7 +112,7 @@ extern unsigned long		mpicMemBaseAdrs;
 
 STATIC	SVCXPRT *wdSvc=0;
 
-#if defined(VXWORKS) || defined(__rtems)
+#if defined(VXWORKS) || defined(__rtems__)
 /* make these public for convenience */
 PTaskId	wdTaskId=NOTASK_ID;
 int		wdRunning=0;
@@ -208,7 +211,7 @@ extern void	CPU_print_stack();
 static void
 installSignalHandler(sigset_t *mask)
 {
-#ifndef __rtems
+#ifndef __rtems__
         struct sigaction sa;
 
         memset(&sa,0,sizeof(sa));
@@ -278,7 +281,7 @@ STATIC PTASK_DECL(wdServer, unused)
 			int	max=wdSvc->xp_sock;
 			int	sval;
 
-#if defined(VXWORKS) || defined(__rtems)
+#if defined(VXWORKS) || defined(__rtems__)
 			/* vxWorks 5.4 does not export svc_fdset */
 			FD_ZERO(&fdset);
 			FD_SET(max,&fdset);
@@ -346,12 +349,17 @@ wdCleanup(void)
 #endif
 }
 
-#if defined(VXWORKS) || defined(__rtems)
+#if defined(VXWORKS) || defined(__rtems__)
 int
-wdStart(void)
+wdStart(int nativePrio)
 {
 	if (NOTASK_ID!=wdTaskId) {
 		fprintf(stderr,"wd already running\n");
+		return -1;
+	}
+
+	if (0==nativePrio) {
+		fprintf(stderr,"usage: wdStart(priority)\n");
 		return -1;
 	}
 
@@ -360,7 +368,7 @@ wdStart(void)
 	/* RTEMS: newlibc has a bug: setjmp always stores the FP context;
 	 *        I have patched it, however...
 	 */
-	if (pTaskSpawn("wdog", WD_PRIO, 5000, 0, wdServer, 0, &wdTaskId)) {
+	if (pTaskSpawn("wdog", NATIVE2SCALED(nativePrio), 5000, 0, wdServer, 0, &wdTaskId)) {
 		wdTaskId=NOTASK_ID;
 		fprintf(stderr,"Unable to spawn WD server task\n");
 		return -1;
@@ -378,6 +386,23 @@ wdStop(void)
 {
 	/* clear the 'running' flag; it is polled by the server */
 	wdRunning=0;
+	return 0;
+}
+
+static int
+_cexpModuleFinalize(void *mod)
+{
+int polls = 5;
+
+	wdStop();
+
+	for (polls = 5; NOTASK_ID != (volatile PTaskId)wdTaskId && polls>=0; polls--)
+			sleep(1);
+
+	if (polls<0) {
+		fprintf(stderr,"Watchdog won't die, refusing to unload\n");
+		return -1;
+	}
 	return 0;
 }
 

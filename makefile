@@ -22,7 +22,7 @@ wd.target.o: wd.c wd.h
 
 # wd client
 wdclnt: wdclnt.c wd.h
-	$(CC) $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $< -lrpcsvc
 
 clean::
 	$(RM) -f wdclnt wd wd.host.o wd.target.o wd.o

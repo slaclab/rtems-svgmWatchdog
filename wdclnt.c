@@ -18,7 +18,8 @@ usage(char *n)
 	fprintf(stderr,"          -h: print this message and quit\n");
 	fprintf(stderr,"       While this program is running, the target\n");
 	fprintf(stderr,"       system is 'watched/petted'.\n");
-	fprintf(stderr,"       Killing (TERM signal) disconnects from the target.\n");
+	fprintf(stderr,"       Killing (INT signal) disconnects from the target.\n");
+	fprintf(stderr,"       Sending USR1 signal requests target to reset.\n");
     fprintf(stderr,"       Suspending this program eventually results in a target reset.\n");
 }
 
