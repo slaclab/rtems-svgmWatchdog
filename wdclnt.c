@@ -13,11 +13,12 @@ usage(char *n)
 	fprintf(stderr,"usage: %s hostname\n",n);
 }
 
-static int terminate=0;
+static int terminate=0, reset=0;
 
 static void
 sigHandler(int signal)
 {
+	if (SIGUSR1==signal) reset=1;
 	terminate=1;
 }
 
@@ -47,7 +48,7 @@ enum clnt_stat cst;
 	struct sigaction sa;
 	memset(&sa,0,sizeof(struct sigaction));
 	sa.sa_handler = sigHandler;
-	if (sigaction(SIGINT,&sa,0)) {
+	if (sigaction(SIGINT,&sa,0)||sigaction(SIGUSR1,&sa,0)) {
 		perror("unable to install signal handler");
 		terminate=1;
 	}
@@ -55,6 +56,18 @@ enum clnt_stat cst;
 
 	while (!terminate) {
 		sleep(3);
+		if (reset) {
+#ifdef DEBUG
+		printf("clnt RESET\n");
+#endif
+		if (cst=callrpc(argv[1],WDPROG,WDVERS,WD_RESET,
+			xdr_void,0,xdr_bool,&stat)) {
+		fprintf(stderr,"Unable to force target reset (rpc failed)");
+		clnt_perrno(cst);
+		fprintf(stderr,"\n");
+		terminate=0;
+		}
+		}
 		if (!terminate) {
 #ifdef DEBUG
 		printf("clnt PET\n");
@@ -87,4 +100,3 @@ enum clnt_stat cst;
 	}
 return 0;
 }
-
