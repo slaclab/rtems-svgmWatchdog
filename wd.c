@@ -1,5 +1,6 @@
 /* watchdog service
  * by Till Straumann <strauman@slac.stanford.edu>, Oct. 2000
+ *    9/09/2002: RTEMS port, 
  */
 
 #if defined(VXWORKS) || defined(__rtems)
