@@ -110,8 +110,9 @@ extern unsigned long		mpicMemBaseAdrs;
 STATIC	SVCXPRT *wdSvc=0;
 
 #if defined(VXWORKS) || defined(__rtems)
-static PTaskId	wdTaskId=NOTASK_ID;
-static int		wdRunning=0;
+/* make these public for convenience */
+PTaskId	wdTaskId=NOTASK_ID;
+int		wdRunning=0;
 #endif
 
 #ifdef SYNERGYTARGET
