@@ -20,7 +20,7 @@ ifdef TGTDIR
 	install wd-vxworks.o $(TGTDIR)/wd.o
 endif
 	install wdclnt	$(HOSTDIR)
-	$(make-rtems)
+	$(make_rtems)
 
 # wd on the host
 wd: wd.host.o
@@ -43,4 +43,4 @@ wdclnt: wdclnt.c wd.h
 
 clean::
 	$(RM) -f wdclnt wd *.o
-	$(make-rtems)
+	$(make_rtems)

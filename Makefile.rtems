@@ -78,7 +78,11 @@ $(filter %.exe, $(PGMS)): ${OBJS} ${LINK_FILES}
 	$(make-exe)
 	xsyms $@ $(@:%.exe=%.sym)
 
+ifndef RTEMS_SITE_INSTALLDIR
+RTEMS_SITE_INSTALLDIR = ${PROJECT_RELEASE}
+endif
+
 # Install the program(s), appending _g or _p as appropriate.
 # for include files, just use $(INSTALL_CHANGE)
 install:  all
-	$(INSTALL_VARIANT) -m 555 ${PGMS} ${INSTALLDIR}/$(RTEMS_BSP)/bin
+	$(INSTALL_VARIANT) -m 555 ${PGMS} ${RTEMS_SITE_INSTALLDIR}/$(RTEMS_BSP)/bin
