@@ -3,8 +3,7 @@ CFLAGS = -O -I$(WRAPPER_PATH)
 CROSS = ccppc
 CROSS_CFLAGS = -I$(WRAPPER_PATH) -DSYNERGYTARGET
 TGTDIR = /remote/synergy/test
-RPCLIBS = -lrpcsvc
-# -lnsl
+RPCLIBS = -lrpcsvc  -lnsl
 
 all: wd wd.target.o wdclnt
 
