@@ -53,10 +53,12 @@
 #include <rpc/auth.h>
 
 #include <rpc/svc.h>
+#include <rpc/rpc.h>
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
 #include <fcntl.h>
+#include <sys/select.h>
 
 #include "wd.h"
 
@@ -119,7 +121,7 @@ STATIC	SVCXPRT *wdSvc=0;
 /* make these public for convenience */
 PTaskId	wdTaskId=NOTASK_ID;
 #endif
-int		wdRunning=0;
+volatile int		  wdRunning=0;
 
 #ifdef SYNERGYTARGET
 /* this leaves the timer stopped */
@@ -381,7 +383,7 @@ wdStart(int nativePrio)
 		fprintf(stderr,"Unable to spawn WD server task\n");
 		return -1;
 	} else {
-		printf("Watchdog started; (wdTaskId) ID 0x%08x\n",wdTaskId);
+		printf("Watchdog ($Revision$) started; (wdTaskId) ID 0x%08x\n",wdTaskId);
 #ifndef SYNERGYTARGET
 		printf("THIS IS A TESTVERSION - DOESN't TALK TO ANY HARDWARE\n");
 #endif

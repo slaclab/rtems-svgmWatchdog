@@ -1,7 +1,7 @@
 WRAPPER_PATH = /home/till/rtos/mps
 CFLAGS = -O -I$(WRAPPER_PATH)
-CROSS = vxppc-gcc
-CROSS_CFLAGS = $(CFLAGS) -I$(WRAPPER_PATH) -DSYNERGYTARGET
+CROSS = ccppc
+CROSS_CFLAGS = -I$(WRAPPER_PATH) -DSYNERGYTARGET
 TGTDIR = /remote/synergy/test
 
 all: wd wd.target.o wdclnt
@@ -18,7 +18,7 @@ wd.host.o: wd.c wd.h
 
 # wd on target
 wd.target.o: wd.c wd.h
-	$(CROSS) $(CROSS_CFLAGS)  -DVXWORKS -o $@ -c $<
+	$(CROSS) $(CROSS_CFLAGS) $(CFLAGS) -DCPU=PPC604 -D__vxworks -DVXWORKS -I$(WIND_BASE)/target/h -o $@ -c $<
 
 # wd client
 wdclnt: wdclnt.c wd.h
