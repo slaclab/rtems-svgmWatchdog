@@ -10,6 +10,9 @@
 #else
 #define  PTASK_DECL(entry,arg)	int entry(void *arg)
 #define  PTASK_LEAVE do {} while (0)
+#ifndef USE_SIGHANDLER
+#define USE_SIGHANDLER
+#endif
 #endif
 
 #ifdef HAVE_CEXP
@@ -115,8 +118,8 @@ STATIC	SVCXPRT *wdSvc=0;
 #if defined(VXWORKS) || defined(__rtems__)
 /* make these public for convenience */
 PTaskId	wdTaskId=NOTASK_ID;
-int		wdRunning=0;
 #endif
+int		wdRunning=0;
 
 #ifdef SYNERGYTARGET
 /* this leaves the timer stopped */
@@ -203,8 +206,10 @@ static jmp_buf jmpEnv;
 static void
 sigHandler(int sig)
 {
+#ifdef __rtems__
 extern void	CPU_print_stack();
 	CPU_print_stack();
+#endif
 	longjmp(jmpEnv,1);
 }
 
@@ -260,6 +265,9 @@ STATIC PTASK_DECL(wdServer, unused)
 		svc_destroy (wdSvc);
 		wdSvc = 0;
 		fprintf (stderr, "unable to register the watchdog RPC service\n");
+#if !defined(__rtems__) && !defined(VXWORKS)
+		fprintf (stderr, "use 'rpcinfo -d' as root to unregister stale svc\n");
+#endif
 		rval = -1;
 		goto leave;
 	}
