@@ -12,7 +12,7 @@
 static void
 usage(char *n)
 {
-	fprintf(stderr,"usage: %s [-rvh] hostname\n",n);
+	fprintf(stderr,"usage: %s [-rvh] target\n",n);
 	fprintf(stderr,"          -r: reset now and quit\n");
 	fprintf(stderr,"          -v: print version number and quit\n");
 	fprintf(stderr,"          -h: print this message and quit\n");
