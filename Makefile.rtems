@@ -82,7 +82,10 @@ ifndef RTEMS_SITE_INSTALLDIR
 RTEMS_SITE_INSTALLDIR = ${PROJECT_RELEASE}
 endif
 
+$(RTEMS_SITE_INSTALLDIR)/bin:
+	test -d $@ || mkdir -p $@
+
 # Install the program(s), appending _g or _p as appropriate.
 # for include files, just use $(INSTALL_CHANGE)
 install:  all
-	$(INSTALL_VARIANT) -m 555 ${PGMS} ${RTEMS_SITE_INSTALLDIR}/$(RTEMS_BSP)/bin
+	$(INSTALL_VARIANT) -m 555 ${PGMS} ${RTEMS_SITE_INSTALLDIR}/bin
