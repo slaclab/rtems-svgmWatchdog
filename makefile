@@ -4,10 +4,10 @@ CROSS = vxppc-gcc
 CROSS_CFLAGS = $(CFLAGS) -I$(WRAPPER_PATH) -DSYNERGYTARGET
 TGTDIR = /remote/synergy/test
 
+all: wd wd.target.o wdclnt
+
 install: all
 	install wd.target.o $(TGTDIR)/wd.o
-
-all: wd wd.target.o wdclnt
 
 # wd on the host
 wd: wd.host.o

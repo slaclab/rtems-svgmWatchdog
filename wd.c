@@ -10,6 +10,10 @@
 #define  PTASK_LEAVE do {} while (0)
 #endif
 
+#if defined(VXWORKS) && defined(__rtems)
+#undef VXWORKS
+#endif
+
 #ifdef VXWORKS
 #include <vxWorks.h>
 #include <rpcLib.h>
@@ -31,7 +35,6 @@
 #include <rtems.h>
 #endif
 
-#define USE_SIGHANDLER
 
 #include <sys/types.h>
 
@@ -95,7 +98,7 @@ extern unsigned long		mpicMemBaseAdrs;
 #endif
 
 
-#define DEBUG	1
+#define DEBUG	0
 
 #if	DEBUG > 0
 #define STATIC
@@ -107,10 +110,8 @@ extern unsigned long		mpicMemBaseAdrs;
 STATIC	SVCXPRT *wdSvc=0;
 
 #if defined(VXWORKS) || defined(__rtems)
-/* make wdTaskId public, so we can easily kill
- * the thread (on RTEMS: rtems_signal_send(wdTaskId,1)
- */
-PTaskId	wdTaskId=NOTASK_ID;
+static PTaskId	wdTaskId=NOTASK_ID;
+static int		wdRunning=0;
 #endif
 
 #ifdef SYNERGYTARGET
@@ -155,7 +156,7 @@ unsigned long tmp;
 }
 
 static void
-wdStop(void)
+wdHalt(void)
 {
 unsigned long tmp;
 	/* disable watchdog */
@@ -198,6 +199,8 @@ static jmp_buf jmpEnv;
 static void
 sigHandler(int sig)
 {
+extern void	CPU_print_stack();
+	CPU_print_stack();
 	longjmp(jmpEnv,1);
 }
 
@@ -222,7 +225,15 @@ installSignalHandler(sigset_t *mask)
         if (sigaction(SIGINT,&sa,0))
                 perror("sigaction");
 #else
+#if	DEBUG > 1
+		/* NOTE: this way of interrupting a system call is
+		 *       _NOT_ clean, as it jumps out of the
+		 *       system call rather than letting it finish
+		 *       with an error code (it's not like unix)
+		 *       USE THIS FEATURE FOR DEBUGGING ONLY
+		 */
 		rtems_signal_catch(sigHandler,  RTEMS_DEFAULT_MODES);
+#endif
 #endif
 }
 #endif
@@ -271,7 +282,7 @@ STATIC PTASK_DECL(wdServer, unused)
 #endif
 
 #if 1
-		do {
+		for (wdRunning=1; wdRunning; ) {
 			struct timeval tout;
 			int	max=wdSvc->xp_sock;
 			int	sval;
@@ -304,7 +315,7 @@ STATIC PTASK_DECL(wdServer, unused)
 				if (!connected)
 					ticks=1;
 			}
-		} while (1);
+		}
 #else
 		/* run the server; the simple approach will not
 		 * prevent from the server being interrupted while
@@ -339,7 +350,7 @@ wdCleanup(void)
       svc_destroy (wdSvc);
     }
 #ifdef SYNERGYTARGET
-  wdStop();
+  wdHalt();
   wdInterval=0x80000000;
 #endif
 }
@@ -355,14 +366,26 @@ wdStart(void)
 
 	rpcInit();
 
-	/* RTEMS: setjmp always stores the FP context */
-	if (pTaskSpawn("wdog", WD_PRIO, 5000, 1, wdServer, 0, &wdTaskId)) {
+	/* RTEMS: newlibc has a bug: setjmp always stores the FP context;
+	 *        I have patched it, however...
+	 */
+	if (pTaskSpawn("wdog", WD_PRIO, 5000, 0, wdServer, 0, &wdTaskId)) {
 		wdTaskId=NOTASK_ID;
 		fprintf(stderr,"Unable to spawn WD server task\n");
 	} else {
 		printf("Watchdog started; (wdTaskId) ID 0x%08x\n",wdTaskId);
+#ifndef SYNERGYTARGET
+		printf("THIS IS A TESTVERSION - DOESN't TALK TO ANY HARDWARE\n");
+#endif
 	}
 
+}
+
+void
+wdStop(void)
+{
+	/* clear the 'running' flag; it is polled by the server */
+	wdRunning=0;
 }
 
 #else
@@ -445,6 +468,9 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 					 * so the watchdog times out
 					 */
 #ifdef SYNERGYTARGET
+					sleep(1);	/* give the network task time to send the reply before we die
+								 * - either by a watchdog timeout or by the sysReset
+								 */
 					sysReset(); /* force hard reset now */
 #endif
 					ticks=0;
