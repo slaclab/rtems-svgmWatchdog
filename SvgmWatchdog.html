@@ -6,7 +6,7 @@
 </head>
 
 <body>
-<h1>A Watchdog Driver for Synergy  VGM Boards</h1>
+<h1>A Watchdog Driver for Synergy VGM Boards</h1>
 <address>
   Till Straumann, &lt;strauman@slac.stanford.edu&gt;; last updated 2003/1/13
 </address>
@@ -54,7 +54,7 @@ task terminated) using the</p>
 </blockquote>
 
 <p>command. (CEXP NOTE: the driver is automatically stopped when unloading by
-a module finalizer. It is <em>not </em>automatically started by the module
+a module finalizer. It is <em>not</em>automatically started by the module
 initializer, however.)</p>
 
 <h2>Chosing a Proper Watchdog Priority</h2>
@@ -62,11 +62,11 @@ initializer, however.)</p>
 <p>Chosing the watchdog task priority is a tradeoff. It is desirable to set
 the priority as low as possible since this will catch runaway tasks. OTOH,
 too low a priority may result in spurious resets if higher prioritized tasks
-need the CPU for longer than the watchdog expiration (1.2seconds by default)
-- cexp module loading or IOC initialization are examples for quite lengthy
-operations. In any case, the watchdog priority should be lower than any
-real-time critical task's. Note that the watchdog task also runs an RPC
-service (described below).</p>
+need the CPU for longer than the watchdog expiration (compile-time default:
+1.2seconds) - cexp module loading or IOC initialization are examples for
+quite lengthy operations. In any case, the watchdog priority should be lower
+than any real-time critical task's. Note that the watchdog task also runs an
+RPC service (described below).</p>
 
 <p>The problem of chosing too high a priority occurs when e.g. a networking
 task runs away or a deadlock occurs while the watchdog task still is
@@ -86,7 +86,7 @@ connection (target crash or deadlock but also a broken network cable or a
 host crash) eventually results in a target reset. Note that it is possible to
 disconnect from the RPC server, thus leaving the "remote watching" mode. The
 <code>wdclnt</code> program transparently connects when starting up and
-disconnects upon exit. </p>
+disconnects upon exit.</p>
 
 <p>While "remote watching" is very useful for development, it is probably not
 desirable to use this mode during extended periods of time on production
@@ -96,8 +96,32 @@ targets.</p>
 
 <p>A VGM target can be remotely reset (using the <code>wdclnt</code> program)
 either by suspending a connected <code>wdclnt</code> (for more than 5
-seconds) or by letting it send a special "reset" RPC (using a command line
-option) who is also recognized by the server.</p>
+seconds) or by letting it issue a special "reset" RPC (using the
+'<code>-r</code>' command line option) who is also recognized by the
+server.</p>
+
+<h2>Download</h2>
+
+<p>This software has not been packaged for download yet. Send me email to
+obtain a copy.</p>
+
+<h3>SSRL Internal Locations</h3>
+
+<p>A checked out copy of the source can be found under</p>
+
+<p><code>/afs/slac/g/spear/rtemsApplications/svgmWatchdog</code></p>
+
+<p>where a loadable object for vxWorks can be found also. The RTEMS module is
+installed under</p>
+
+<p><code>/afs/slac/g/spear/rtemsApplications/powerpc-rtems/svgm/bin</code></p>
+
+<p>The client / host utility program 'wdclnt' is available for linux-x86,
+solaris-sun4, and dec-alpha under</p>
+
+<p><code>/afs/slac/g/spear/hostApps/@sys/bin</code></p>
+
+<p>You may want to add that directory to your PATH.</p>
 
 <h2>The <code>wdclnt</code> Program MAN Page</h2>
 
@@ -114,9 +138,9 @@ option) who is also recognized by the server.</p>
 <p><strong><code>wdclnt</code></strong> establishes a connection to the
 watchdog RPC server running on the <em>target</em>. It issues periodic 'PET'
 RPCs while connected. <strong><code>wdclnt</code></strong> may be terminated
-by sending it a SIGINT signal which will terminate the connection. Sending
-SIGUSR1 causes <strong><code>wdclnt</code></strong> to issue a RESET request
-to the target.</p>
+by sending it a SIGINT signal which will terminate the connection; SIGUSR1
+causes <strong><code>wdclnt</code></strong> to issue a RESET request to the
+target.</p>
 
 <h3>OPTIONS</h3>
 <dl>

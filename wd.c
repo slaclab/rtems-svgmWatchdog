@@ -58,7 +58,9 @@
 #include <signal.h>
 #include <setjmp.h>
 #include <fcntl.h>
+#ifndef VXWORKS
 #include <sys/select.h>
+#endif
 
 #include "wd.h"
 
