@@ -2,6 +2,8 @@
  * by Till Straumann <strauman@slac.stanford.edu>, Oct. 2000
  */
 
+#include "wrap.h"
+
 #ifdef VXWORKS
 #include <vxWorks.h>
 #include <rpcLib.h>
@@ -11,11 +13,26 @@
 #include <loadLib.h>
 #include <sysLib.h>
 #if 0
+#if 0
 #include <svgm1.h>
 #else
 #define REG_WATCHDOG_PET ((UCHAR *)0xffefff48)
 #endif
 #endif
+#endif
+
+#ifdef __rtems
+#include <rtems.h>
+#endif
+
+#define USE_SIGHANDLER
+
+#include <sys/types.h>
+
+#include <netinet/in.h>
+#include <rpc/types.h>
+#include <rpc/xdr.h>
+#include <rpc/auth.h>
 
 #include <rpc/svc.h>
 #include <stdio.h>
@@ -26,6 +43,32 @@
 #include "wd.h"
 
 #ifdef VXWORKS
+
+extern unsigned long		readPCI();
+extern void					writePCI();
+
+extern unsigned long		mpicMemBaseAdrs;
+
+#define NOTASK_ID			ERROR
+
+#elif defined(__rtems)
+
+#include <bsp/openpic.h>
+#include <libcpu/io.h>
+
+#define mpicMemBaseAdrs		((unsigned long)OpenPIC)
+#define readPCI(adrs) 		in_le32((void*)(adrs))
+#define writePCI(adrs,val)	out_le32((void*)(adrs),(val))
+#define	rpcInit()			do {} while(0)
+#define rpcTaskInit()		rtems_rpc_task_init()
+#define sysReset()			rtemsReboot()
+
+#define NOTASK_ID			0
+
+#endif
+
+
+#ifdef SYNERGYTARGET
 /* priority of the watchdog task */
 #define WD_PRIO		3
 /* hardware watchdog pet interval
@@ -45,9 +88,9 @@
 #endif
 
 
-#define DEBUG
+#define DEBUG	1
 
-#ifdef DEBUG
+#if	DEBUG > 0
 #define STATIC
 #else
 #define STATIC static
@@ -55,20 +98,19 @@
 
 
 STATIC	SVCXPRT *wdSvc=0;
-#ifdef VXWORKS
-STATIC	int	wdTaskId=ERROR;
+#ifdef SYNERGYTARGET
+/* make wdTaskId public, so we can easily kill
+ * the thread (on RTEMS: rtems_signal_send(wdTaskId,1)
+ */
+PTaskId	wdTaskId=NOTASK_ID;
 /* this leaves the timer stopped */
 STATIC  unsigned long wdInterval=0x80000000;
 
-extern unsigned long readPCI();
-extern void writePCI();
+#define MPIC_VP_DISABLE			0x80000000
 
-extern unsigned long mpicMemBaseAdrs;
-
-#define MPIC_VP_DISABLE		0x80000000
-
+#define MPIC_PPR_CTP_3			0x23080
 #define MPIC_T3_BASE_ADR_OFF	0x11d0
-#define MPIC_T3_VP_ADR_OFF	0x11e0
+#define MPIC_T3_VP_ADR_OFF		0x11e0
 #define MPIC_T3_DEST_ADR_OFF	0x11f0
 
 
@@ -76,6 +118,8 @@ static void
 wdInit(unsigned long us)
 {
 unsigned long tmp;
+	/* mask processor 3 interrupts */
+	writePCI(MPIC_PPR_CTP_3 + mpicMemBaseAdrs, 0xf);
 	/* route T3 interrupt to processor3 (-> reset hw) */
 	writePCI(MPIC_T3_DEST_ADR_OFF + mpicMemBaseAdrs,8);
 
@@ -95,6 +139,8 @@ unsigned long tmp;
 	tmp &= ~MPIC_VP_DISABLE;
 	tmp |= 0x000f0007; /* taken from example in their manual */
 	writePCI((MPIC_T3_VP_ADR_OFF+mpicMemBaseAdrs),tmp);
+	/* enable irqs at the fake 'processor 3' */
+	writePCI(MPIC_PPR_CTP_3 + mpicMemBaseAdrs, 0x0);
 }
 
 static void
@@ -102,6 +148,8 @@ wdStop(void)
 {
 unsigned long tmp;
 	/* disable watchdog */
+	/* disable irqs at the fake 'processor 3' */
+	writePCI(MPIC_PPR_CTP_3 + mpicMemBaseAdrs, 0xf);
 	tmp = readPCI((MPIC_T3_VP_ADR_OFF+mpicMemBaseAdrs));
 	tmp |= MPIC_VP_DISABLE;
 	writePCI((MPIC_T3_VP_ADR_OFF+mpicMemBaseAdrs),tmp);
@@ -133,18 +181,20 @@ STATIC int	TICKS;
 
 STATIC void wdCleanup(void);
 
-#ifndef VXWORKS
+#ifdef USE_SIGHANDLER
 static jmp_buf jmpEnv;
 
 static void
 sigHandler(int sig)
 {
+	printk("caught 0x%08x\n",sig);
 	longjmp(jmpEnv,1);
 }
 
 static void
 installSignalHandler(sigset_t *mask)
 {
+#ifndef __rtems
         struct sigaction sa;
 
         memset(&sa,0,sizeof(sa));
@@ -161,22 +211,22 @@ installSignalHandler(sigset_t *mask)
 
         if (sigaction(SIGINT,&sa,0))
                 perror("sigaction");
-
+#else
+		rtems_signal_catch(sigHandler,  RTEMS_DEFAULT_MODES);
+#endif
 }
-
 #endif
 
-static int
-wdServer(void)
+STATIC PTASK_DECL(wdServer, unused)
 {
 	int	rval=0;
 	fd_set	fdset;
+
 	/* tell vxWorks that this task will to RPC
 	 * (vxWorks tasks must/can not share rpc context :-(
 	 */
-#ifdef VXWORKS
 	rpcTaskInit();
-#endif
+
 	TICKS = CLNT_PET_US / (1000000 * PET_S + PET_US);
 
 	/* create service handle */
@@ -196,9 +246,10 @@ wdServer(void)
 		rval = -1;
 		goto leave;
 	}
-#ifdef VXWORKS
+#ifdef SYNERGYTARGET
 	wdInit(WD_INTERVAL);
-#else
+#endif
+#ifdef USE_SIGHANDLER
 	if ( 0 == setjmp(jmpEnv)) {
 		sigset_t block;
 		/* install a signal handler */
@@ -213,7 +264,7 @@ wdServer(void)
 			int	max=wdSvc->xp_sock;
 			int	sval;
 
-#ifdef VXWORKS
+#if defined(VXWORKS) || defined(__rtems)
 			/* vxWorks 5.4 does not export svc_fdset */
 			FD_ZERO(&fdset);
 			FD_SET(max,&fdset);
@@ -232,7 +283,7 @@ wdServer(void)
 
 				if (ticks-->0)
 					pet();
-#ifndef VXWORKS
+#ifndef SYNERGYTARGET
 				else {
 					printf("WATCHDOG TIMEOUT, resetting...\n");	
 					connected=0;
@@ -249,7 +300,7 @@ wdServer(void)
 		 */
 		svc_run();
 #endif
-#ifndef VXWORKS
+#ifdef USE_SIGHANDLER
 	} else {
 		/* signal handler jumps in here */
 		fprintf(stderr,"(longjump) terminating...\n");
@@ -261,10 +312,10 @@ wdServer(void)
 leave:
 	/* vxWorks: we MUST cleanup in the server context */
 	wdCleanup();
-#ifdef VXWORKS
-	wdTaskId=ERROR;
+#ifdef SYNERGYTARGET
+	wdTaskId=NOTASK_ID;
 #endif
-	return -1;
+	PTASK_LEAVE;
 }
 
 STATIC void
@@ -275,25 +326,29 @@ wdCleanup(void)
       svc_unregister (WDPROG, WDVERS);
       svc_destroy (wdSvc);
     }
-#ifdef VXWORKS
+#ifdef SYNERGYTARGET
   wdStop();
   wdInterval=0x80000000;
 #endif
 }
 
-#ifdef VXWORKS
+#if defined(VXWORKS) || defined(__rtems)
 void
 wdStart(void)
 {
-	if (ERROR!=wdTaskId) {
+	if (NOTASK_ID!=wdTaskId) {
 		fprintf(stderr,"wd already running\n");
 		return;
 	}
+
 	rpcInit();
-	wdTaskId=taskSpawn("tWatchdog",WD_PRIO,0,5000,wdServer,
-			0,0,0,0,0,0,0,0,0,0);
-	if (ERROR==wdTaskId) {
+
+	/* RTEMS: setjmp always stores the FP context */
+	if (pTaskSpawn("wdog", WD_PRIO, 5000, 1, wdServer, 0, &wdTaskId)) {
+		wdTaskId=NOTASK_ID;
 		fprintf(stderr,"Unable to spawn WD server task\n");
+	} else {
+		printf("Watchdog started; (wdTaskId) ID 0x%08x\n",wdTaskId);
 	}
 
 }
@@ -302,7 +357,7 @@ wdStart(void)
 int
 main(int argc, char **argv)
 {
-	wdServer();
+	wdServer(0);
 	return 0;
 }
 
@@ -319,7 +374,7 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 				 * reply takes a long time...
 				 */
 				pet();
-#ifndef VXWORKS
+#if !defined(SYNERGYTARGET) || DEBUG > 1
 				printf("CONNECT\n");
 #endif
 				svc_sendreply(xprt,xdr_bool,(char*)&rval);
@@ -336,7 +391,7 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 				 * reply takes a long time...
 				 */
 				pet();
-#ifndef VXWORKS
+#if !defined(SYNERGYTARGET) || DEBUG > 1
 				printf("DISCONNECT\n");
 #endif
 				svc_sendreply(xprt,xdr_bool,(char*)&rval);
@@ -353,7 +408,7 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 				 * reply takes a long time...
 				 */
 				pet();
-#ifndef VXWORKS
+#if !defined(SYNERGYTARGET) || DEBUG > 1
 				printf("PET\n");
 #endif
 				svc_sendreply(xprt,xdr_bool,(char*)&rval);
@@ -369,7 +424,7 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 				 * reply takes a long time...
 				 */
 				pet();
-#ifndef VXWORKS
+#if !defined(SYNERGYTARGET) || DEBUG > 1
 				printf("RESET\n");
 #endif
 				svc_sendreply(xprt,xdr_bool,(char*)&rval);
@@ -377,9 +432,7 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 					/* leave in the connected state,
 					 * so the watchdog times out
 					 */
-#ifdef VXWORKS
 					sysReset(); /* force hard reset now */
-#endif
 					ticks=0;
 				}
 			}
