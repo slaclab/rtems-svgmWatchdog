@@ -29,7 +29,9 @@ install: all
 ifdef TGTDIR
 	install wd-vxworks.o $(TGTDIR)/wd.o
 endif
+ifndef RTEMS_CUSTOM
 	install wdclnt	$(HOSTDIR)
+endif
 	$(make_rtems)
 
 # wd on the host
@@ -54,6 +56,8 @@ wdclnt: wdclnt.c wd.h
 clean::
 	$(RM) -f wdclnt wd *.o
 	$(make_rtems)
+
+distclean: clean
 
 blah:
 	echo $(RTEMS_MAKEFILE_PATH)

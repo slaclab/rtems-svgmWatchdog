@@ -401,7 +401,7 @@ wdStop(void)
 	return 0;
 }
 
-static int
+int
 _cexpModuleFinalize(void *mod)
 {
 int polls = 5;
