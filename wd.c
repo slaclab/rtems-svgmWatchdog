@@ -2,7 +2,12 @@
  * by Till Straumann <strauman@slac.stanford.edu>, Oct. 2000
  */
 
+#if defined(VXWORKS) || defined(__rtems)
 #include "wrap.h"
+#else
+#define  PTASK_DECL(entry,arg)	int entry(void *arg)
+#define  PTASK_LEAVE do {} while (0)
+#endif
 
 #ifdef VXWORKS
 #include <vxWorks.h>
@@ -68,9 +73,10 @@ extern unsigned long		mpicMemBaseAdrs;
 #endif
 
 
-#ifdef SYNERGYTARGET
 /* priority of the watchdog task */
 #define WD_PRIO		3
+
+#ifdef SYNERGYTARGET
 /* hardware watchdog pet interval
  * 1000000 * PET_S + PET_US us
  */
@@ -98,11 +104,15 @@ extern unsigned long		mpicMemBaseAdrs;
 
 
 STATIC	SVCXPRT *wdSvc=0;
-#ifdef SYNERGYTARGET
+
+#if defined(VXWORKS) || defined(__rtems)
 /* make wdTaskId public, so we can easily kill
  * the thread (on RTEMS: rtems_signal_send(wdTaskId,1)
  */
 PTaskId	wdTaskId=NOTASK_ID;
+#endif
+
+#ifdef SYNERGYTARGET
 /* this leaves the timer stopped */
 STATIC  unsigned long wdInterval=0x80000000;
 
@@ -187,7 +197,6 @@ static jmp_buf jmpEnv;
 static void
 sigHandler(int sig)
 {
-	printk("caught 0x%08x\n",sig);
 	longjmp(jmpEnv,1);
 }
 
@@ -225,7 +234,9 @@ STATIC PTASK_DECL(wdServer, unused)
 	/* tell vxWorks that this task will to RPC
 	 * (vxWorks tasks must/can not share rpc context :-(
 	 */
+#ifdef SYNERGYTARGET
 	rpcTaskInit();
+#endif
 
 	TICKS = CLNT_PET_US / (1000000 * PET_S + PET_US);
 
@@ -432,7 +443,9 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 					/* leave in the connected state,
 					 * so the watchdog times out
 					 */
+#ifdef SYNERGYTARGET
 					sysReset(); /* force hard reset now */
+#endif
 					ticks=0;
 				}
 			}

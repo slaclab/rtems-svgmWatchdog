@@ -1,6 +1,7 @@
-CFLAGS = -O
+WRAPPER_PATH = /home/till/rtos/mps
+CFLAGS = -O -I$(WRAPPER_PATH)
 CROSS = vxppc-gcc
-CROSS_CFLAGS = $(CFLAGS)
+CROSS_CFLAGS = $(CFLAGS) -I$(WRAPPER_PATH) -DSYNERGYTARGET
 TGTDIR = /remote/synergy/test
 
 install: all
