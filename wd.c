@@ -224,16 +224,6 @@ installSignalHandler(sigset_t *mask)
 
         if (sigaction(SIGINT,&sa,0))
                 perror("sigaction");
-#else
-#if	DEBUG > 1
-		/* NOTE: this way of interrupting a system call is
-		 *       _NOT_ clean, as it jumps out of the
-		 *       system call rather than letting it finish
-		 *       with an error code (it's not like unix)
-		 *       USE THIS FEATURE FOR DEBUGGING ONLY
-		 */
-		rtems_signal_catch(sigHandler,  RTEMS_DEFAULT_MODES);
-#endif
 #endif
 }
 #endif
@@ -326,7 +316,7 @@ STATIC PTASK_DECL(wdServer, unused)
 #ifdef USE_SIGHANDLER
 	} else {
 		/* signal handler jumps in here */
-		fprintf(stderr,"(longjump) ");
+		fprintf(stderr,"(longjump) terminating server.\n");
 	}
 #endif
 
@@ -335,7 +325,6 @@ STATIC PTASK_DECL(wdServer, unused)
 leave:
 	/* vxWorks: we MUST cleanup in the server context */
 	wdCleanup();
-	fprintf(stderr,"...terminated watchdog server.\n");
 #ifdef SYNERGYTARGET
 	wdTaskId=NOTASK_ID;
 #endif
