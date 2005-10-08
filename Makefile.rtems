@@ -44,7 +44,7 @@ include $(RTEMS_ROOT)/make/leaf.cfg
 
 DEFINES  += -DHAVE_CEXP
 
-CPPFLAGS += -I. -Iwrap -O2
+CPPFLAGS += -I. -Iwrap -O2 -I../cexp
 ifeq ($(RTEMS_BSP),svgm)
 CPPFLAGS += -DSYNERGYTARGET
 endif
