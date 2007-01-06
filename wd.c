@@ -66,31 +66,23 @@
 
 #ifdef VXWORKS
 
-extern unsigned long		readPCI();
-extern void					writePCI();
-
-extern unsigned long		mpicMemBaseAdrs;
-
 #define NOTASK_ID			ERROR
 
 #elif defined(__rtems__)
 
-#include <bsp/openpic.h>
-#include <libcpu/io.h>
-
-#define mpicMemBaseAdrs		((unsigned long)OpenPIC)
-#define readPCI(adrs) 		in_le32((void*)(adrs))
-#define writePCI(adrs,val)	out_le32((void*)(adrs),(val))
 #define	rpcInit()			do {} while(0)
 #define rpcTaskInit()		rtems_rpc_task_init()
-#define sysReset()			rtemsReboot()
+
+#ifndef sysReset
+#define sysReset			wdSysReset
+#endif
 
 #define NOTASK_ID			0
 
 #endif
 
 
-#ifdef SYNERGYTARGET
+#ifdef TARGET
 /* hardware watchdog pet interval
  * 1000000 * PET_S + PET_US us
  */
@@ -125,71 +117,9 @@ PTaskId	wdTaskId=NOTASK_ID;
 #endif
 volatile int		  wdRunning=0;
 
-#ifdef SYNERGYTARGET
-/* this leaves the timer stopped */
-STATIC  unsigned long wdInterval=0x80000000;
-
-#define MPIC_VP_DISABLE			0x80000000
-
-#define MPIC_PPR_CTP_3			0x23080
-#define MPIC_T3_BASE_ADR_OFF	0x11d0
-#define MPIC_T3_VP_ADR_OFF		0x11e0
-#define MPIC_T3_DEST_ADR_OFF	0x11f0
-
-
-static void
-wdInit(unsigned long us)
-{
-unsigned long tmp;
-	/* mask processor 3 interrupts */
-	writePCI(MPIC_PPR_CTP_3 + mpicMemBaseAdrs, 0xf);
-	/* route T3 interrupt to processor3 (-> reset hw) */
-	writePCI(MPIC_T3_DEST_ADR_OFF + mpicMemBaseAdrs,8);
-
-	/* MSB==0 starts the timer */
-	/* took this count calculation from synergy */
-
-	wdInterval = us*33/8+us*3/80+us*3/800+us*3/8000;
-
-	wdInterval &= 0x7fffffff;
-
-	/* load timer counter */
-	writePCI((MPIC_T3_BASE_ADR_OFF+mpicMemBaseAdrs),0x80000000);
-	writePCI((MPIC_T3_BASE_ADR_OFF+mpicMemBaseAdrs),wdInterval);
-
-	/* enable irq */
-	tmp = readPCI((MPIC_T3_VP_ADR_OFF+mpicMemBaseAdrs));
-	tmp &= ~MPIC_VP_DISABLE;
-	tmp |= 0x000f0007; /* taken from example in their manual */
-	writePCI((MPIC_T3_VP_ADR_OFF+mpicMemBaseAdrs),tmp);
-	/* enable irqs at the fake 'processor 3' */
-	writePCI(MPIC_PPR_CTP_3 + mpicMemBaseAdrs, 0x0);
-}
-
-static void
-wdHalt(void)
-{
-unsigned long tmp;
-	/* disable watchdog */
-	/* disable irqs at the fake 'processor 3' */
-	writePCI(MPIC_PPR_CTP_3 + mpicMemBaseAdrs, 0xf);
-	tmp = readPCI((MPIC_T3_VP_ADR_OFF+mpicMemBaseAdrs));
-	tmp |= MPIC_VP_DISABLE;
-	writePCI((MPIC_T3_VP_ADR_OFF+mpicMemBaseAdrs),tmp);
-	writePCI((MPIC_T3_BASE_ADR_OFF+mpicMemBaseAdrs),0x80000000);
-}
-
-static void
-pet(void)
-{
-	/* load timer counter */
-	writePCI((MPIC_T3_BASE_ADR_OFF+mpicMemBaseAdrs),0x80000000);
-	writePCI((MPIC_T3_BASE_ADR_OFF+mpicMemBaseAdrs),wdInterval);
-}
-
-#else
-static void
-pet(void)
+#ifndef TARGET
+void
+wdPet(void)
 {
 printf("pet\n");
 }
@@ -249,7 +179,7 @@ STATIC PTASK_DECL(wdServer, unused)
 	/* tell vxWorks that this task will to RPC
 	 * (vxWorks tasks must/can not share rpc context :-(
 	 */
-#ifdef SYNERGYTARGET
+#ifdef TARGET
 	rpcTaskInit();
 #endif
 
@@ -275,7 +205,7 @@ STATIC PTASK_DECL(wdServer, unused)
 		rval = -1;
 		goto leave;
 	}
-#ifdef SYNERGYTARGET
+#ifdef TARGET
 	wdInit(WD_INTERVAL);
 #endif
 #ifdef USE_SIGHANDLER
@@ -311,8 +241,8 @@ STATIC PTASK_DECL(wdServer, unused)
 				/* else it timed out */
 
 				if (ticks-->0)
-					pet();
-#ifndef SYNERGYTARGET
+					wdPet();
+#ifndef TARGET
 				else {
 					printf("WATCHDOG TIMEOUT, resetting...\n");	
 					connected=0;
@@ -341,7 +271,7 @@ STATIC PTASK_DECL(wdServer, unused)
 leave:
 	/* vxWorks: we MUST cleanup in the server context */
 	wdCleanup();
-#ifdef SYNERGYTARGET
+#ifdef TARGET
 	wdTaskId=NOTASK_ID;
 #endif
 	PTASK_LEAVE;
@@ -355,9 +285,8 @@ wdCleanup(void)
       svc_unregister (WDPROG, WDVERS);
       svc_destroy (wdSvc);
     }
-#ifdef SYNERGYTARGET
+#ifdef TARGET
   wdHalt();
-  wdInterval=0x80000000;
 #endif
 }
 
@@ -385,8 +314,8 @@ wdStart(int nativePrio)
 		fprintf(stderr,"Unable to spawn WD server task\n");
 		return -1;
 	} else {
-		printf("Watchdog ($Revision$) started; (wdTaskId) ID 0x%08x\n",wdTaskId);
-#ifndef SYNERGYTARGET
+		printf("Watchdog ($Revision$) started; (wdTaskId) ID 0x%08x\n",(unsigned)wdTaskId);
+#ifndef TARGET
 		printf("THIS IS A TESTVERSION - DOESN't TALK TO ANY HARDWARE\n");
 #endif
 	}
@@ -438,11 +367,11 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 				/* pet once in case sending the
 				 * reply takes a long time...
 				 */
-				pet();
-#if !defined(SYNERGYTARGET) || DEBUG > 1
+				wdPet();
+#if !defined(TARGET) || DEBUG > 1
 				printf("CONNECT\n");
 #endif
-				svc_sendreply(xprt,xdr_bool,(char*)&rval);
+				svc_sendreply(xprt,(xdrproc_t)xdr_bool,(char*)&rval);
 				if (!connected) {
 					connected=1;
 					ticks = TICKS;
@@ -455,11 +384,11 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 				/* pet once in case sending the
 				 * reply takes a long time...
 				 */
-				pet();
-#if !defined(SYNERGYTARGET) || DEBUG > 1
+				wdPet();
+#if !defined(TARGET) || DEBUG > 1
 				printf("DISCONNECT\n");
 #endif
-				svc_sendreply(xprt,xdr_bool,(char*)&rval);
+				svc_sendreply(xprt,(xdrproc_t)xdr_bool,(char*)&rval);
 				if (connected) {
 					connected=0;
 					ticks=1;
@@ -472,11 +401,11 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 				/* pet once in case sending the
 				 * reply takes a long time...
 				 */
-				pet();
-#if !defined(SYNERGYTARGET) || DEBUG > 1
+				wdPet();
+#if !defined(TARGET) || DEBUG > 1
 				printf("PET\n");
 #endif
-				svc_sendreply(xprt,xdr_bool,(char*)&rval);
+				svc_sendreply(xprt,(xdrproc_t)xdr_bool,(char*)&rval);
 				if (connected) {
 					ticks=TICKS;
 				}
@@ -488,16 +417,16 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 				/* pet once in case sending the
 				 * reply takes a long time...
 				 */
-				pet();
-#if !defined(SYNERGYTARGET) || DEBUG > 1
+				wdPet();
+#if !defined(TARGET) || DEBUG > 1
 				printf("RESET\n");
 #endif
-				svc_sendreply(xprt,xdr_bool,(char*)&rval);
+				svc_sendreply(xprt,(xdrproc_t)xdr_bool,(char*)&rval);
 				if (connected) {
 					/* leave in the connected state,
 					 * so the watchdog times out
 					 */
-#ifdef SYNERGYTARGET
+#ifdef TARGET
 					sleep(1);	/* give the network task time to send the reply before we die
 								 * - either by a watchdog timeout or by the sysReset
 								 */

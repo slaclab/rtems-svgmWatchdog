@@ -38,6 +38,12 @@ include $(RTEMS_MAKEFILE_PATH)/Makefile.inc
 include $(RTEMS_CUSTOM)
 include $(RTEMS_ROOT)/make/leaf.cfg
 
+ifneq "$(filter $(RTEMS_BSP_FAMILY),svgm uC5282)xx" "xx"
+C_PIECES+=bsp_$(RTEMS_BSP_FAMILY)
+else
+$(error BSP "$(RTEMS_BSP_FAMILY)" not supported)
+endif
+
 #
 # (OPTIONAL) Add local stuff here using +=
 #
@@ -45,9 +51,7 @@ include $(RTEMS_ROOT)/make/leaf.cfg
 DEFINES  += -DHAVE_CEXP
 
 CPPFLAGS += -I. -Iwrap -O2 -I../cexp
-ifeq ($(RTEMS_BSP),svgm)
-CPPFLAGS += -DSYNERGYTARGET
-endif
+CPPFLAGS += -DTARGET
 CFLAGS   +=
 
 #

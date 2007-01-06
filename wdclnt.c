@@ -65,7 +65,7 @@ char			*hostnm;
 	}
 	hostnm=argv[optind];
 	if (cst=callrpc(hostnm,WDPROG,WDVERS,WD_CONNECT,
-			xdr_void,0,xdr_bool,&stat)) {
+			(xdrproc_t)xdr_void,0,(xdrproc_t)xdr_bool,(char*)&stat)) {
 		fprintf(stderr,"Unable to connect to watchdog on %s:",hostnm);
 		clnt_perrno(cst);
 		fprintf(stderr,"\n");
@@ -94,7 +94,7 @@ char			*hostnm;
 		printf("clnt RESET\n");
 #endif
 		if (cst=callrpc(hostnm,WDPROG,WDVERS,WD_RESET,
-			xdr_void,0,xdr_bool,&stat)) {
+			(xdrproc_t)xdr_void,0,(xdrproc_t)xdr_bool,(char*)&stat)) {
 		fprintf(stderr,"Unable to force target reset (rpc failed)");
 		clnt_perrno(cst);
 		fprintf(stderr,"\n");
@@ -109,7 +109,7 @@ char			*hostnm;
 		printf("clnt PET\n");
 #endif
 		if (cst=callrpc(hostnm,WDPROG,WDVERS,WD_PET,
-			xdr_void,0,xdr_bool,&stat)) {
+			(xdrproc_t)xdr_void,0,(xdrproc_t)xdr_bool,(char*)&stat)) {
 		fprintf(stderr,"Unable to pet watchdog");
 		clnt_perrno(cst);
 		fprintf(stderr,"\n");
@@ -124,7 +124,7 @@ char			*hostnm;
 	}
 
 	if (cst=callrpc(hostnm,WDPROG,WDVERS,WD_DISCONNECT,
-			xdr_void,0,xdr_bool,&stat)) {
+			(xdrproc_t)xdr_void,0,(xdrproc_t)xdr_bool,(char*)&stat)) {
 		fprintf(stderr,"Unable to disconnect from watchdog on %s:",hostnm);
 		clnt_perrno(cst);
 		fprintf(stderr,"\n");

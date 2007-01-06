@@ -1,7 +1,7 @@
 WRAPPER_PATH = wrap
 CFLAGS = -O -I$(WRAPPER_PATH)
 CROSS = ccppc
-CROSS_CFLAGS = -I$(WRAPPER_PATH) -DSYNERGYTARGET
+CROSS_CFLAGS = -I$(WRAPPER_PATH) -DTARGET
 # leave undefined if not installing vxWorks version TGTDIR = .
 HOSTDIR = /afs/slac/g/spear/hostApps/@sys/bin/
 RPCLIBS = -lrpcsvc  -lnsl

@@ -9,4 +9,9 @@
 #define WD_PET		3
 #define WD_RESET	4
 
+void wdInit(unsigned long interval_us);
+void wdHalt(void);
+void wdPet(void);
+void wdSysReset(void);
+
 #endif
