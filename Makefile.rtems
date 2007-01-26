@@ -38,7 +38,7 @@ include $(RTEMS_MAKEFILE_PATH)/Makefile.inc
 include $(RTEMS_CUSTOM)
 include $(RTEMS_ROOT)/make/leaf.cfg
 
-ifneq "$(filter $(RTEMS_BSP_FAMILY),svgm uC5282)xx" "xx"
+ifneq "$(filter $(RTEMS_BSP_FAMILY),svgm uC5282 beatnik)xx" "xx"
 C_PIECES+=bsp_$(RTEMS_BSP_FAMILY)
 else
 $(error BSP "$(RTEMS_BSP_FAMILY)" not supported)
