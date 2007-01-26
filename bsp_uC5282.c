@@ -44,12 +44,19 @@ unsigned long tmp;
 
 	MCF5282_WTM_WMR  = tmp;
 	MCF5282_WTM_WCR |= MCF5282_WTM_WCR_EN;
+
+	if ( ! (MCF5282_WTM_WCR_EN & MCF5282_WTM_WCR) ) {
+		printf("Warning: Watchdog could NOT be enabled; this bit can only\n");
+		printf("         be changed ONCE and the firmware has probably   \n");
+		printf("         disabled the watchdog already -- sorry...       \n");
+	}
 }
 
 void
 wdHalt(void)
 {
 	/* disable watchdog -- don't know if this really works */
+	/* UPDATE: is DOESN't work. The enable bit is sticky... :-( */
 	MCF5282_WTM_WCR &= ~MCF5282_WTM_WCR_EN;
 }
 
