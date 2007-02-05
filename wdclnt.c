@@ -12,6 +12,7 @@
 static void
 usage(char *n)
 {
+	fprintf(stderr,"$Id$\n");
 	fprintf(stderr,"usage: %s [-rvh] target\n",n);
 	fprintf(stderr,"          -r: reset now and quit\n");
 	fprintf(stderr,"          -v: print version number and quit\n");
