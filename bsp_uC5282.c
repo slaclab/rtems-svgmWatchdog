@@ -38,7 +38,7 @@
 #define WD_MAJOR_SHIFT	4
 #define WD_MINOR_MASK	0xf
 
-unsigned uC5282WatchdogType = 0;
+unsigned uC5282WatchdogType = WD_MAJOR_DMA | 0 /* DMA timer 0 */;
 
 struct wdops_ {
 	void (*init)(unsigned long);	
