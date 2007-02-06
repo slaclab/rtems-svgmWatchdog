@@ -1,23 +1,25 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>Watchdog driver for Synergy SVGM PPC boards</title>
-  <meta name="generator" content="amaya 6.4, see http://www.w3.org/Amaya/" />
+  <title>Watchdog driver for RTEMS</title>
+  <meta name="generator" content="Bluefish 1.0.7"/>
 </head>
 
 <body>
-<h1>A Watchdog Driver for Synergy VGM Boards</h1>
+<h1>A Watchdog Driver for RTEMS</h1>
 <address>
-  Till Straumann, &lt;strauman@slac.stanford.edu&gt;; last updated 2003/1/13
+  Till Straumann, &lt;strauman@slac.stanford.edu&gt;; last updated 2007/2/5
 </address>
 
 <h2>Introduction</h2>
 
-<p>The VGM series boards by Synergy microsystems implement a watchdog timer
+<p>Some embedded computer systems implement a watchdog timer
 in hardware. The watchdog, when enabled, resets the board upon expiration.
-Note that early versions of VGM boards may lack this feature. The hardware
+(Note that early versions of VGM boards may lack this feature). The hardware
 watchdog is implemented using one of the four timers (#3) present in the
-OpenPIC interrupt controller.</p>
+OpenPIC interrupt controller (SVGM). On the MVME5500 and MVME6100 boards
+the "Discovery" host bridge features a watchdog and on the uC5282 the Coldfire
+MCF5282 CPU provides a watchdog and several other timers.</p>
 
 <p>The driver described on this page initializes the watchdog timer
 (compile-time configurable timeout) and starts a 'watchdog task' to
@@ -25,18 +27,18 @@ periodically 'pet' (reset) the watchdog timer. The scheduling priority for
 the task is set at driver initialization and should be carefully chosen.</p>
 
 <p>The driver also implements an RPC service for remotely watching and/or
-resetting the VGM board.</p>
+resetting the target board.</p>
 
-<p>The watchdog driver runs on vxWorks or RTEMS (a test version also runs on
-various flavours of Unix), the remote client on Linux, Solaris or other
+<p>The watchdog driver runs on vxWorks (deprecated/no longer supported) or RTEMS
+(a test version also runs on various flavours of Unix), the RPC client on Linux, Solaris or other
 Unices.</p>
 
 <h2>Starting the Driver</h2>
 
 <p>The watchdog driver (along with makefiles and the host-side 'client'
-program) is available in CVS ($CVSROOT/drivers/svgmWatchdog). After building
-and linking the driver (either statically or as a loadable module) into the
-system, the driver must be initialized/started. The generic SSRL 'system'
+program) is available in CVS (SSRL Repository  -- $CVSROOT/drivers/svgmWatchdog).
+After building and linking the driver (either statically or as a loadable module) into the
+system, the driver must be initialized/started. The generic 'system'
 startup script already loads the driver but does not start it, however (to
 avoid interference of the watchdog task with the user application).</p>
 
@@ -57,9 +59,9 @@ task terminated) using the</p>
 a module finalizer. It is <em>not</em>automatically started by the module
 initializer, however.)</p>
 
-<h2>Chosing a Proper Watchdog Priority</h2>
+<h2>Choosing a Proper Watchdog Priority</h2>
 
-<p>Chosing the watchdog task priority is a tradeoff. It is desirable to set
+<p>Choosing the watchdog task priority is a tradeoff. It is desirable to set
 the priority as low as possible since this will catch runaway tasks. OTOH,
 too low a priority may result in spurious resets if higher prioritized tasks
 need the CPU for longer than the watchdog expiration (compile-time default:
@@ -68,7 +70,7 @@ quite lengthy operations. In any case, the watchdog priority should be lower
 than any real-time critical task's. Note that the watchdog task also runs an
 RPC service (described below).</p>
 
-<p>The problem of chosing too high a priority occurs when e.g. a networking
+<p>The problem of choosing too high a priority occurs when e.g. a networking
 task runs away or a deadlock occurs while the watchdog task still is
 operational. In these cases, control over the remote CPU may be lost unless
 'remote watching' as described in the following section is used.</p>
@@ -77,7 +79,7 @@ operational. In these cases, control over the remote CPU may be lost unless
 
 <p>Using the watchdog driver's RPC service functionality in combination with
 a host-side client program '<code>wdclnt</code>', permanent control over a
-target VGM computer can be asserted. After a <em>connection</em> has been
+target computer can be asserted. After a <em>connection</em> has been
 established between <code>wdclnt</code> and the target watchdog RPC server,
 the server (i.e. the watchdog driver) requires the client to send periodic
 'software pet RPCs' (compile-time default: 5 seconds) and enforces a hardware
@@ -94,11 +96,44 @@ targets.</p>
 
 <h2>Using "Remote Reset"</h2>
 
-<p>A VGM target can be remotely reset (using the <code>wdclnt</code> program)
+<p>A target board can be remotely reset (using the <code>wdclnt</code> program)
 either by suspending a connected <code>wdclnt</code> (for more than 5
 seconds) or by letting it issue a special "reset" RPC (using the
-'<code>-r</code>' command line option) who is also recognized by the
+'<code>-r</code>' command line option) which is also recognized by the
 server.</p>
+
+<h2>uC5282 Note</h2>
+
+<p>Unfortunately, the hardware watchdog timer built into the MCF5282 has
+the "feature" that it is enabled by default after CPU reset and that
+it can only be disabled but not re-enabled again. Since the uC5282 firmware
+disables the watchdog during boot-up the watchdog timer is essentially
+useless.</p>
+
+<p>However, with a little help from the motherboard designer, another hardware
+timer can be employed as a watchdog.</p>
+
+<p>Currently, the driver supports
+using any one of the 4 DMA timers. Hence, a wire must be routed
+(on the motherboard) from one of the DMA timer's <code>DTOUT</code> pins
+to system reset (pin 98, <code>#MR</code> of the soDIMM connector).
+<code>DTOUT #0</code> and <code>DTOUT #1</code> are at
+pins 71 and 73 of the soDIMM connector, respectively (confusingly, Arcturus label these
+pins "port C" whereas the MCF5282 manual uses the term "port TD").</p>
+
+<p>By default, the driver uses DMA timer #0 as the watchdog. This assignment
+is configurable, however, by means of a global variable <code>uC5282WatchdogType</code>.
+Currently, the types <code>0x00</code> ("real" watchdog) and <code>0x10</code>
+(DMA timer) are recognized. The timer "instance" is added to the type: e.g.,
+in order to use DMA timer 2 <code>uC5282WatchdogType</code> would have
+to be set to <code>0x12</code> (e.g., from a Cexp script) prior to calling
+<code>wdStart(&lt;pri&gt;)</code>.</p>
+
+<p>
+<i>Note: without a wire from <code>DTOUT</code> to <code>MR</code> (reset)
+the DMA timer watchdog does not work.
+</i>
+</p>
 
 <h2>Download</h2>
 
@@ -109,17 +144,17 @@ obtain a copy.</p>
 
 <p>A checked out copy of the source can be found under</p>
 
-<p><code>/afs/slac/g/spear/rtemsApplications/svgmWatchdog</code></p>
+<p><code>/afs/slac/package/rtems/&lt;version&gt;/svgmWatchdog</code></p>
 
-<p>where a loadable object for vxWorks can be found also. The RTEMS module is
+<p>The RTEMS module is
 installed under</p>
 
-<p><code>/afs/slac/g/spear/rtemsApplications/powerpc-rtems/svgm/bin</code></p>
+<p><code>/afs/slac/package/rtems/&lt;version&gt;/target/ssrlApps/powerpc-rtems/svgm/bin</code></p>
 
 <p>The client / host utility program 'wdclnt' is available for linux-x86,
 solaris-sun4, and dec-alpha under</p>
 
-<p><code>/afs/slac/g/spear/hostApps/@sys/bin</code></p>
+<p><code>/afs/slac/package/rtems/&lt;version&gt;/host/@sys/bin</code></p>
 
 <p>You may want to add that directory to your PATH.</p>
 
