@@ -58,6 +58,7 @@ clean::
 	$(make_rtems)
 
 distclean: clean
+	$(make_rtems)
 
 blah:
 	echo $(RTEMS_MAKEFILE_PATH)
