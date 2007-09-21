@@ -59,9 +59,9 @@ task terminated) using the</p>
 a module finalizer. It is <em>not</em>automatically started by the module
 initializer, however.)</p>
 
-<h2>Chosing a Proper Watchdog Priority</h2>
+<h2>Choosing a Proper Watchdog Priority</h2>
 
-<p>Chosing the watchdog task priority is a tradeoff. It is desirable to set
+<p>Choosing the watchdog task priority is a tradeoff. It is desirable to set
 the priority as low as possible since this will catch runaway tasks. OTOH,
 too low a priority may result in spurious resets if higher prioritized tasks
 need the CPU for longer than the watchdog expiration (compile-time default:
@@ -70,7 +70,7 @@ quite lengthy operations. In any case, the watchdog priority should be lower
 than any real-time critical task's. Note that the watchdog task also runs an
 RPC service (described below).</p>
 
-<p>The problem of chosing too high a priority occurs when e.g. a networking
+<p>The problem of choosing too high a priority occurs when e.g. a networking
 task runs away or a deadlock occurs while the watchdog task still is
 operational. In these cases, control over the remote CPU may be lost unless
 'remote watching' as described in the following section is used.</p>
