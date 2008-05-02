@@ -15,6 +15,10 @@
 #endif
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifdef HAVE_CEXP
 #include <cexpHelp.h>
 #endif
@@ -62,7 +66,7 @@
 #include <sys/select.h>
 #endif
 
-#include "wd.h"
+#include "rtemsBspWatchdog.h"
 
 #ifdef VXWORKS
 
@@ -327,23 +331,6 @@ wdStop(void)
 {
 	/* clear the 'running' flag; it is polled by the server */
 	wdRunning=0;
-	return 0;
-}
-
-int
-_cexpModuleFinalize(void *mod)
-{
-int polls = 5;
-
-	wdStop();
-
-	for (polls = 5; NOTASK_ID != (volatile PTaskId)wdTaskId && polls>=0; polls--)
-			sleep(1);
-
-	if (polls<0) {
-		fprintf(stderr,"Watchdog won't die, refusing to unload\n");
-		return -1;
-	}
 	return 0;
 }
 
