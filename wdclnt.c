@@ -7,7 +7,7 @@
 
 #include <signal.h>
 
-#include "wd.h"
+#include "rtemsBspWatchdog.h"
 
 static void
 usage(char *n)

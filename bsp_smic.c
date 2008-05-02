@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 
-#include "wd.h"
+#include "rtemsBspWatchdog.h"
 
 #define DEBUG	0
 

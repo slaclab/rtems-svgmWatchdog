@@ -13,5 +13,6 @@ void wdInit(unsigned long interval_us);
 void wdHalt(void);
 void wdPet(void);
 void wdSysReset(void);
+int  wdStop(void);
 
 #endif

@@ -26,7 +26,7 @@
 
 #include <stdio.h>
 
-#include "wd.h"
+#include "rtemsBspWatchdog.h"
 
 #ifdef VXWORKS
 
