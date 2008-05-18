@@ -10,14 +10,11 @@
 #include <bsp/gt_timer.h>
 #endif
 
-
 #include <stdio.h>
 
 #include "rtemsBspWatchdog.h"
 
-#define DEBUG	0
-
-#if	DEBUG > 0
+#ifdef DEBUG
 #define STATIC
 #else
 #define STATIC static
