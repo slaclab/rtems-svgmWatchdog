@@ -104,8 +104,6 @@
 #endif
 
 
-#define DEBUG	0
-
 #if	DEBUG > 0
 #define STATIC
 #else
@@ -244,12 +242,18 @@ STATIC PTASK_DECL(wdServer, unused)
 					svc_getreqset(&fdset);
 				/* else it timed out */
 
-				if (ticks-->0)
+				if (ticks-->0) {
 					wdPet();
-#ifndef TARGET
+#if DEBUG > 1
+					printf("PET (waiting for client; remaining %i)\n", ticks);
+#endif
+				}
+#if !defined(TARGET) || DEBUG > 1
 				else {
 					printf("WATCHDOG TIMEOUT, resetting...\n");	
+#ifndef TARGET
 					connected=0;
+#endif
 				}
 #endif
 				if (!connected)
@@ -390,7 +394,11 @@ wd_dispatch(struct svc_req *req, SVCXPRT *xprt)
 				 */
 				wdPet();
 #if !defined(TARGET) || DEBUG > 1
-				printf("PET\n");
+				{
+				int    reqno=-1;
+				svc_getargs(xprt, (xdrproc_t)xdr_int, (char*)&reqno);
+				printf("PET (%i)\n",reqno);
+				}
 #endif
 				svc_sendreply(xprt,(xdrproc_t)xdr_bool,(char*)&rval);
 				if (connected) {
