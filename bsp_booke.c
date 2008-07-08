@@ -23,7 +23,7 @@
 #include "rtemsBspWatchdog.h"
 
 #define DEBUG	0
-#define WD_EXCEPTION
+#undef  WD_EXCEPTION
 
 #if	DEBUG > 0
 #define STATIC
@@ -94,7 +94,8 @@ rtems_interrupt_level k;
 	u &= ~ (BOOKE_TCR_WP(3) | BOOKE_TCR_WPEXT(0xf));
 #ifdef WD_EXCEPTION
 	/* for testing purposes we can let the watchdog raise a
-	 * critical exception instead of resetting...
+	 * machine-check exception (on second timeout) instead of
+	 * resetting...
 	 */
 	u |= BOOKE_TCR_WIE | BOOKE_TCR_WRC(BOOKE_TCR_WRC_NO_RESET);
 #else
