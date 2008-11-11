@@ -5,7 +5,7 @@ include $(top_srcdir)/rtems-pre.am
 
 EXEEXT=$(OBJEXEEXT)
 
-librtemsBspWatchdog_a_SOURCES       = wd.c
+librtemsBspWatchdog_a_SOURCES       = wd.c wrap/wrap.h
 librtemsBspWatchdog_a_SOURCES      += rtemsBspWatchdog.h
 
 include_bsp_HEADERS                 = rtemsBspWatchdog.h
