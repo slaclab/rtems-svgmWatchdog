@@ -28,6 +28,10 @@
 
 #include "rtemsBspWatchdog.h"
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifdef VXWORKS
 
 extern unsigned long		readPCI();
@@ -121,5 +125,9 @@ wdPet(void)
 void
 wdSysReset(void)
 {
+#if RTEMS_VERSION_ATLEAST(4,9,0)
+	bsp_reset();
+#else
 	rtemsReboot();
+#endif
 }

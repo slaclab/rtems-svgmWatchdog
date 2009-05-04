@@ -21,6 +21,10 @@
 #define STATIC static
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 extern unsigned short wArmWatchdog(unsigned);
 extern unsigned short wResetWatchdog();
 

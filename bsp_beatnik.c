@@ -20,6 +20,10 @@
 #define STATIC static
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 void
 wdInit(unsigned long us)
 {
@@ -41,5 +45,9 @@ wdPet(void)
 void
 wdSysReset(void)
 {
+#if RTEMS_VERSION_ATLEAST(4,9,0)
+	bsp_reset();
+#else
 	rtemsReboot();
+#endif
 }

@@ -31,6 +31,10 @@
 #define STATIC static
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 SPR_RW(BOOKE_TCR)
 SPR_RW(BOOKE_TSR)
 
@@ -134,5 +138,9 @@ wdPet(void)
 void
 wdSysReset(void)
 {
+#if RTEMS_VERSION_ATLEAST(4,9,0)
+	bsp_reset();
+#else
 	rtemsReboot();
+#endif
 }
