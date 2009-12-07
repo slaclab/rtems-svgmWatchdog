@@ -6,6 +6,7 @@
 
 #ifdef __rtems__
 #include <rtems.h>
+#include <bsp.h>
 #endif
 
 
