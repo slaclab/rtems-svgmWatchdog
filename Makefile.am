@@ -43,7 +43,8 @@ EXTRA_PROGRAMS=$(HOSTPROG)
 # $(HOSTPROG)$(HOSTEXEEXT)
 exechostbin_PROGRAMS = @HOSTPROGRAM@
 wdclnt_SOURCES       = wdclnt.c rtemsBspWatchdog.h
-wdclnt_LDADD         = -lrpcsvc  -lnsl
+wdclnt_LDADD_solaris = -lrpcsvc -lnsl
+wdclnt_LDADD         = $(wdclnt_LDADD_$(build_os:solaris%=solaris))
 
 wdclnt.$(OBJEXT): wdclnt.c rtemsBspWatchdog.h
 	$(HOSTCC) -c -O2 -o $@ -I. -I.. -I$(top_builddir) -I$(srcdir)/wrap $<
