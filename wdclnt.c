@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <netdb.h>
 #include <unistd.h>
-
+#include <stdlib.h>
+#include <string.h>
 
 #include <signal.h>
 
