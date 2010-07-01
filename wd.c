@@ -59,6 +59,7 @@
 #include <rpc/svc.h>
 #include <rpc/rpc.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <signal.h>
 #include <setjmp.h>
 #include <fcntl.h>

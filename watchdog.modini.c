@@ -6,6 +6,7 @@
  */
 
 #include <rtems.h>
+#include <unistd.h>
 #include "wrap.h"
 #include <cexpHelp.h>
 #include "rtemsBspWatchdog.h"
