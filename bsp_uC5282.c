@@ -4,20 +4,21 @@
  * by Till Straumann <strauman@slac.stanford.edu>, Jan. 2007
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #if defined(VXWORKS) && defined(__rtems__)
 #undef VXWORKS
 #endif
 
-#ifdef __rtems__
-#include <rtems.h>
-#include <bsp.h>
-#include <mcf5282/mcf5282.h>
-#endif
-
-
 #include <stdio.h>
 
 #include "rtemsBspWatchdog.h"
+
+#ifdef __rtems__
+#include <mcf5282/mcf5282.h>
+#endif
 
 #define DEBUG	0
 
@@ -25,10 +26,6 @@
 #define STATIC
 #else
 #define STATIC static
-#endif
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
 #endif
 
 /* This global variable selects
@@ -207,5 +204,9 @@ wdPet(void)
 void
 wdSysReset(void)
 {
+#if RTEMS_VERSION_ATLEAST(4,9,99)
+	bsp_reset();
+#else
 	bsp_reset(0);
+#endif
 }

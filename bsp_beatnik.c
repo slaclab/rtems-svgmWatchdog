@@ -4,24 +4,22 @@
  * by Till Straumann <strauman@slac.stanford.edu>, Jan. 2007
  */
 
-#ifdef __rtems__
-#include <rtems.h>
-#include <bsp.h>
-#include <bsp/gt_timer.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
 #endif
 
 #include <stdio.h>
 
 #include "rtemsBspWatchdog.h"
 
+#ifdef __rtems__
+#include <bsp/gt_timer.h>
+#endif
+
 #ifdef DEBUG
 #define STATIC
 #else
 #define STATIC static
-#endif
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
 #endif
 
 void

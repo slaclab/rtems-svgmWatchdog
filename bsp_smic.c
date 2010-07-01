@@ -4,11 +4,9 @@
  * by Till Straumann <strauman@slac.stanford.edu>, Jan. 2007
  */
 
-#ifdef __rtems__
-#include <rtems.h>
-#include <bsp.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
 #endif
-
 
 #include <stdio.h>
 
@@ -20,10 +18,6 @@
 #define STATIC
 #else
 #define STATIC static
-#endif
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
 #endif
 
 extern unsigned short wArmWatchdog(unsigned);
@@ -54,5 +48,9 @@ wdPet(void)
 void
 wdSysReset(void)
 {
+#if RTEMS_VERSION_ATLEAST(4,9,99)
+	bsp_reset();
+#else
 	rtemsReboot();
+#endif
 }

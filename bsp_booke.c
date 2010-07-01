@@ -4,10 +4,16 @@
  * by Till Straumann <strauman@slac.stanford.edu>, Jan. 2007
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <stdio.h>
+
+#include "rtemsBspWatchdog.h"
+
 #ifdef __rtems__
-#include <rtems.h>
 #include <libcpu/spr.h>
-#include <bsp.h>
 #endif
 
 #ifndef BOOKE_TCR_WRC_NO_RESET
@@ -18,10 +24,6 @@
 #define	BOOKE_TCR_WRC_RESET 2
 #endif
 
-#include <stdio.h>
-
-#include "rtemsBspWatchdog.h"
-
 #define DEBUG	0
 #undef  WD_EXCEPTION
 
@@ -29,10 +31,6 @@
 #define STATIC
 #else
 #define STATIC static
-#endif
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
 #endif
 
 SPR_RW(BOOKE_TCR)

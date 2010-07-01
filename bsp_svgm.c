@@ -18,19 +18,13 @@
 #include <sysLib.h>
 #endif
 
-#ifdef __rtems__
-#include <rtems.h>
-#include <bsp.h>
-#endif
-
-
 #include <stdio.h>
-
-#include "rtemsBspWatchdog.h"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include "rtemsBspWatchdog.h"
 
 #ifdef VXWORKS
 
