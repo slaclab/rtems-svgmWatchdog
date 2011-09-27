@@ -12,6 +12,8 @@ include_bsp_HEADERS                 = rtemsBspWatchdog.h
 
 EXTRA_librtemsBspWatchdog_a_SOURCES = bsp_beatnik.c bsp_booke.c bsp_smic.c bsp_svgm.c bsp_uC5282.c
 
+EXTRA_DIST                          = SvgmWatchdog.html
+
 librtemsBspWatchdog_a_LIBADD        = $(WATCHDOG_BSP_SUPPORT).$(OBJEXT)
 librtemsBspWatchdog_a_DEPENDENCIES  = $(WATCHDOG_BSP_SUPPORT).$(OBJEXT)
 
