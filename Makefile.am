@@ -5,7 +5,7 @@ include $(top_srcdir)/rtems-pre.am
 
 EXEEXT=$(OBJEXEEXT)
 
-librtemsBspWatchdog_a_SOURCES       = wd.c wrap/wrap.h
+librtemsBspWatchdog_a_SOURCES       = wd.c wrap.h
 librtemsBspWatchdog_a_SOURCES      += rtemsBspWatchdog.h
 
 include_bsp_HEADERS                 = rtemsBspWatchdog.h
@@ -17,7 +17,7 @@ EXTRA_DIST                          = SvgmWatchdog.html
 librtemsBspWatchdog_a_LIBADD        = $(WATCHDOG_BSP_SUPPORT).$(OBJEXT)
 librtemsBspWatchdog_a_DEPENDENCIES  = $(WATCHDOG_BSP_SUPPORT).$(OBJEXT)
 
-AM_CPPFLAGS                        += -I$(srcdir)/wrap -O2 -DTARGET
+AM_CPPFLAGS                        += -I$(srcdir) -O2 -DTARGET
 
 lib_LIBRARIES                       = librtemsBspWatchdog.a
 
