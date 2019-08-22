@@ -1,4 +1,6 @@
-/* $Id$ */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <rpc/rpc.h>
 #include <stdio.h>
 #include <netdb.h>
@@ -13,7 +15,7 @@
 static void
 usage(char *n)
 {
-	fprintf(stderr,"$Name$ / $Id$\n");
+	fprintf(stderr,"%s version %s\n", n, PACKAGE_VERSION);
 	fprintf(stderr,"usage: %s [-rvh] target\n",n);
 	fprintf(stderr,"          -r: reset now and quit\n");
 	fprintf(stderr,"          -v: print version number and quit\n");
