@@ -1,4 +1,3 @@
-/* $Id$ */
 
 /* watchdog hardware support for uC5282
  * by Till Straumann <strauman@slac.stanford.edu>, Jan. 2007

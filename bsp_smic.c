@@ -1,4 +1,3 @@
-/* $Id$ */
 
 /* Watchdog hardware support for PCs with IPMI/SMIC watchdog.
  * by Till Straumann <strauman@slac.stanford.edu>, Jan. 2007
