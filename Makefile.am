@@ -48,5 +48,4 @@ wdclnt_LDADD_solaris = -lrpcsvc -lnsl
 wdclnt_LDADD         = $(wdclnt_LDADD_$(build_os:solaris%=solaris))
 
 wdclnt.$(OBJEXT): wdclnt.c rtemsBspWatchdog.h
-	$(HOSTCC) -c -O2 -o $@ -I. -I.. -I$(top_builddir) -I$(srcdir)/wrap '-DPACKAGE_VERSION="$(PACKAGE_VERSION)"' $<
-
+	$(HOSTCC) -c -O2 -DPACKAGE_VERSION='"$(PACKAGE_VERSION)"' -o $@ -I. -I.. -I$(top_builddir) -I$(srcdir)/wrap $<

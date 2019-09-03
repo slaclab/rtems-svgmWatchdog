@@ -1,3 +1,6 @@
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <rpc/rpc.h>
 #include <stdio.h>
 #include <netdb.h>
