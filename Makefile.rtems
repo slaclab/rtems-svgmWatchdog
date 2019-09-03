@@ -1,6 +1,4 @@
 #
-#  $Id$
-#
 # Templates/Makefile.leaf
 # 	Template leaf node Makefile
 #
@@ -56,7 +54,7 @@ endif
 # (OPTIONAL) Add local stuff here using +=
 #
 
-DEFINES  += -DHAVE_CEXP
+DEFINES  += -DHAVE_CEXP -DPACKAGE_VERSION="$(shell git describe --always --dirty)"
 
 CPPFLAGS += -I. -Iwrap -O2 -I../cexp
 CPPFLAGS += -DTARGET

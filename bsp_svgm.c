@@ -1,4 +1,3 @@
-/* $Id$ */
 
 /* watchdog hardware support for Synergy VGM BSP
  * by Till Straumann <strauman@slac.stanford.edu>, Oct. 2000
