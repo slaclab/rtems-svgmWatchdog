@@ -1,6 +1,9 @@
+<<<<<<< HEAD
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+=======
+>>>>>>> cvs_name_2_gitrev
 #include <rpc/rpc.h>
 #include <stdio.h>
 #include <netdb.h>
@@ -15,7 +18,11 @@
 static void
 usage(char *n)
 {
+<<<<<<< HEAD
 	fprintf(stderr,"%s version %s\n", n, PACKAGE_VERSION);
+=======
+	fprintf(stderr,"Git revision %s\n", PACKAGE_VERSION);
+>>>>>>> cvs_name_2_gitrev
 	fprintf(stderr,"usage: %s [-rvh] target\n",n);
 	fprintf(stderr,"          -r: reset now and quit\n");
 	fprintf(stderr,"          -v: print version number and quit\n");

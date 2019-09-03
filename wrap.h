@@ -1,6 +1,5 @@
 #ifndef TILL_WRAPPER_H
 #define TILL_WRAPPER_H
-/* $Id$ */
 
 /* portability wrapper for semaphores and tasks
  * Author: Till Straumann <strauman@slac.stanford.edu>, 10/2001

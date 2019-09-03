@@ -1,4 +1,3 @@
-#  $Id$
 AUTOMAKE_OPTIONS=foreign
 
 include $(top_srcdir)/rtems-pre.am
@@ -50,4 +49,3 @@ wdclnt_LDADD         = $(wdclnt_LDADD_$(build_os:solaris%=solaris))
 
 wdclnt.$(OBJEXT): wdclnt.c rtemsBspWatchdog.h
 	$(HOSTCC) -c -O2 -DPACKAGE_VERSION='"$(PACKAGE_VERSION)"' -o $@ -I. -I.. -I$(top_builddir) -I$(srcdir)/wrap $<
-
