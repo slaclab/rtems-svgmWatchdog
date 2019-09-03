@@ -1,4 +1,3 @@
-/* $Id$ */
 
 /* watchdog RPC service
  * by Till Straumann <strauman@slac.stanford.edu>, Oct. 2000
