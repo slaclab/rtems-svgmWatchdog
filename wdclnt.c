@@ -55,7 +55,7 @@ struct timeval  tout;
 				exit(0);
 
 			case 'v':
-				fprintf(stderr,"%s\n","$Revision$");
+				fprintf(stderr,"%s\n", PACKAGE_VERSION);
 				exit(0);
 
 			case 'r':
