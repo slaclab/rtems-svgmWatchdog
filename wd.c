@@ -321,7 +321,7 @@ wdStart(int nativePrio)
 		fprintf(stderr,"Unable to spawn WD server task\n");
 		return -1;
 	} else {
-		printf("Watchdog ($Revision$) started; (wdTaskId) ID 0x%08x\n",(unsigned)wdTaskId);
+		printf("Watchdog (version %s) started; (wdTaskId) ID 0x%08x\n", PACKAGE_VERSION, (unsigned)wdTaskId);
 #ifndef TARGET
 		printf("THIS IS A TESTVERSION - DOESN't TALK TO ANY HARDWARE\n");
 #endif
